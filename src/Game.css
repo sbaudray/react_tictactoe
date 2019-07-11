@@ -1,0 +1,25 @@
+:root {
+  --margin: 20px;
+}
+
+.board {
+  --size: 450px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+  height: var(--size);
+  margin: var(--margin);
+  width: var(--size);
+}
+
+.square {
+  align-items: center;
+  border: 1px solid black;
+  display: flex;
+  justify-content: center;
+  user-select: none;
+}
+
+.gameStatus {
+  margin: var(--margin);
+}
