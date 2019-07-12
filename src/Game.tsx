@@ -35,32 +35,42 @@ const winningCombos = [
   [2, 5, 8]
 ];
 
-function gameStateReducer(state: GameStateT, action: GameActionT) {
-  const { type, square } = action;
+function nextPlayer(currentPlayer: PlayerT) {
+  switch (currentPlayer) {
+    case PlayerT.Circle:
+      return PlayerT.Cross;
+    case PlayerT.Cross:
+      return PlayerT.Circle;
+  }
+}
+
+function isWon(board: BoardT) {
+  return winningCombos.some(
+    ([x, y, z]) => board[x] && board[x] === board[y] && board[y] === board[z]
+  );
+}
+
+function isDraw(board: BoardT) {
+  return board.every(Boolean);
+}
+
+function handlePlay(state: GameStateT, { square }: GameActionT) {
   const { board, player } = state;
 
-  switch (type) {
-    case "PLAY": {
-      // dont do that, it breaks shallow comparisons
-      board[square] = player;
+  // dont do that, it breaks shallow comparisons
+  board[square] = player;
 
-      let winner = null;
+  if (isWon(board)) return { ...state, status: StatusT.Won };
 
-      for (const [x, y, z] of winningCombos) {
-        if (board[x] && board[x] === board[y] && board[y] === board[z]) {
-          winner = board[x];
-        }
-      }
+  if (isDraw(board)) return { ...state, status: StatusT.Draw };
 
-      if (winner) return { ...state, status: StatusT.Won };
+  return { ...state, player: nextPlayer(player) };
+}
 
-      if (board.every(Boolean)) return { ...state, status: StatusT.Draw };
-
-      return {
-        ...state,
-        player: player === PlayerT.Circle ? PlayerT.Cross : PlayerT.Circle
-      };
-    }
+function gameStateReducer(state: GameStateT, action: GameActionT) {
+  switch (action.type) {
+    case "PLAY":
+      return handlePlay(state, action);
     default:
       return state;
   }
