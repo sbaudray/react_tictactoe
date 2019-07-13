@@ -24,6 +24,8 @@ interface GameStateT {
 
 type GameActionT = { type: "PLAY"; square: number };
 
+type GameDispatchT = (action: GameActionT) => void;
+
 const winningCombos = [
   [0, 1, 2],
   [3, 4, 5],
@@ -76,14 +78,15 @@ function gameStateReducer(state: GameStateT, action: GameActionT) {
   }
 }
 
-function gameStateToString(state: GameStateT) {
-  const { status, player } = state;
-
-  if (status === StatusT.Draw) return "It's a draw !";
-
-  if (status === StatusT.Won) return `Won: ${player}`;
-
-  return `Playing: ${player}`;
+function gameStatus(player: PlayerT, status: StatusT) {
+  switch (status) {
+    case StatusT.Draw:
+      return "It's a draw !";
+    case StatusT.Won:
+      return `Won: ${player}`;
+    default:
+      return `Playing: ${player}`;
+  }
 }
 
 function markToString(mark: MarkT) {
@@ -112,19 +115,36 @@ function Square({ mark, onClick }: SquareProps) {
 }
 
 interface BoardProps {
-  children: React.ReactNode;
+  board: BoardT;
+  status: StatusT;
+  dispatch: GameDispatchT;
 }
 
-function Board({ children }: BoardProps) {
-  return <div className="board">{children}</div>;
+function Board({ board, status, dispatch }: BoardProps) {
+  return (
+    <div className="board">
+      {board.map((mark, index) => (
+        <Square
+          key={index}
+          mark={mark}
+          onClick={
+            status !== StatusT.Running || mark
+              ? undefined
+              : () => dispatch({ type: "PLAY", square: index })
+          }
+        />
+      ))}
+    </div>
+  );
 }
 
 interface GameStatusProps {
-  state: GameStateT;
+  player: PlayerT;
+  status: StatusT;
 }
 
-function GameStatus({ state }: GameStatusProps) {
-  return <div className="gameStatus">{gameStateToString(state)}</div>;
+function GameStatus({ player, status }: GameStatusProps) {
+  return <div className="gameStatus">{gameStatus(player, status)}</div>;
 }
 
 function Game() {
@@ -134,24 +154,12 @@ function Game() {
     status: StatusT.Running
   });
 
-  const { board, status } = gameState;
-
-  const squares = board.map((mark, index) => (
-    <Square
-      key={index}
-      mark={mark}
-      onClick={
-        status !== StatusT.Running || mark
-          ? undefined
-          : () => dispatch({ type: "PLAY", square: index })
-      }
-    />
-  ));
+  const { board, status, player } = gameState;
 
   return (
     <>
-      <GameStatus state={gameState} />
-      <Board>{squares}</Board>
+      <GameStatus player={player} status={status} />
+      <Board board={board} status={status} dispatch={dispatch} />
     </>
   );
 }
