@@ -57,7 +57,12 @@ function isDraw(board: BoardT) {
 }
 
 function handlePlay(state: GameStateT, { square }: GameActionT) {
-  const { board, player } = state;
+  const { board, player, status } = state;
+
+  // illegal play
+  if (status !== StatusT.Running || board[square]) {
+    return state;
+  }
 
   // dont do that, it breaks shallow comparisons
   board[square] = player;
@@ -116,22 +121,17 @@ function Square({ mark, onClick }: SquareProps) {
 
 interface BoardProps {
   board: BoardT;
-  status: StatusT;
   dispatch: GameDispatchT;
 }
 
-function Board({ board, status, dispatch }: BoardProps) {
+function Board({ board, dispatch }: BoardProps) {
   return (
     <div className="board">
       {board.map((mark, index) => (
         <Square
           key={index}
           mark={mark}
-          onClick={
-            status !== StatusT.Running || mark
-              ? undefined
-              : () => dispatch({ type: "PLAY", square: index })
-          }
+          onClick={() => dispatch({ type: "PLAY", square: index })}
         />
       ))}
     </div>
@@ -159,7 +159,7 @@ function Game() {
   return (
     <>
       <GameStatus player={player} status={status} />
-      <Board board={board} status={status} dispatch={dispatch} />
+      <Board board={board} dispatch={dispatch} />
     </>
   );
 }
